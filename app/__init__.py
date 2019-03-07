@@ -6,11 +6,12 @@
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
+from flask_moment import Moment
 from config import config
 
 bootstrap = Bootstrap()
-db = SQLAlchemy()
-
+# db = SQLAlchemy()
+moment = Moment()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -18,10 +19,11 @@ def create_app(config_name):
     environment = config[config_name]
     app.config.from_object(environment)
     #: 对环境初始化
-    environment.init_app()
+    environment.init_app(app)
 
     bootstrap.init_app(app)
-    db.init_app(app)
+    # db.init_app(app)
+    moment.init_app(app)
 
     #: 注册蓝图
     from .main import main as main_blueprint

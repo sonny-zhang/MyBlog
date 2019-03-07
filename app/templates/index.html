@@ -1,0 +1,12 @@
+{% entends "base.html" %}
+
+{% block title %}Sonny{% endblock %}
+
+<p>{{ moment(current_time).format('LLL') }}</p>
+<p>{{ moment(current_time).fromNow(refresh=True) }}</p>
+
+{% block page_content %}
+    <div class="page-header">
+        <h1>这是首页！</h1>
+    </div>
+{% endblock %}
