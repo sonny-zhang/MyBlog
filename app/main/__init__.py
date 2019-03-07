@@ -7,4 +7,5 @@ from flask import Blueprint
 #: 创建蓝图
 main = Blueprint('main', __name__)
 
-from . import views
+#: 加载路由，异常处理。(urls里导入了views，所以不用加载了)
+from . import urls, errors
