@@ -9,7 +9,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    pass
+    SECRET_KEY = 'hard to guss string'
 
     #: init_app()方法，参数是application实例。
     #: 功能：可以执行当前环境配置的初始化

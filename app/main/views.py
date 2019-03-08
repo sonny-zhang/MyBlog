@@ -5,6 +5,7 @@
 from datetime import datetime
 from flask import render_template
 from flask.views import MethodView
+from .forms import *
 
 
 class Index(MethodView):
@@ -12,4 +13,11 @@ class Index(MethodView):
         return render_template('index.html', current_time=datetime.utcnow())
 
     def post(self):
-        pass
+        name = None
+        form = NameForm()
+        if form.validate_on_submit():
+            #: 所有数据通过验证函数
+            name = form.name.data
+            # form.name.data = ''
+        return render_template('index.html', current_time=datetime.utcnow(),
+                               form=form, name=name)
