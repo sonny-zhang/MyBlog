@@ -2,16 +2,17 @@
 # @Author   : sonny-zhang
 # @FileName : _init__.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
-
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_moment import Moment
+from flask_mail import Mail
 from config import config
 
 bootstrap = Bootstrap()
-# db = SQLAlchemy()
+db = SQLAlchemy()
 moment = Moment()
+mail = Mail()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -22,8 +23,9 @@ def create_app(config_name):
     environment.init_app(app)
 
     bootstrap.init_app(app)
-    # db.init_app(app)
+    db.init_app(app)
     moment.init_app(app)
+    mail.init_app(app)
 
     #: 注册蓝图
     from .main import main as main_blueprint

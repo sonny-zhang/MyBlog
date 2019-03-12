@@ -2,11 +2,11 @@
 # @Author   : sonny-zhang
 # @FileName : forms.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import InputRequired
 
 
-class NameForm(Form):
+class NameForm(FlaskForm):
     name = StringField('用户名', validators=[InputRequired()])
     submit = SubmitField('提交')

@@ -3,21 +3,24 @@
 # @FileName : views.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
 from datetime import datetime
-from flask import render_template
+from flask import render_template, session, flash
 from flask.views import MethodView
-from .forms import *
+from app.forms import *
 
 
 class Index(MethodView):
     def get(self):
-        return render_template('index.html', current_time=datetime.utcnow())
+        form = NameForm()
+        return render_template('index.html', current_time=datetime.utcnow(), form=form)
 
     def post(self):
-        name = None
         form = NameForm()
         if form.validate_on_submit():
             #: 所有数据通过验证函数
-            name = form.name.data
-            # form.name.data = ''
+            old_name = session.get('name')
+            if old_name is not None and old_name != form.name.data:
+                flash('您的名字已经被修改！')
+            session['name'] = form.name.data
+            # return redirect(url_for('main.index'))
         return render_template('index.html', current_time=datetime.utcnow(),
-                               form=form, name=name)
+                               form=form, name=session.get('name'))
