@@ -14,6 +14,7 @@ db = SQLAlchemy()
 moment = Moment()
 mail = Mail()
 
+
 def create_app(config_name):
     app = Flask(__name__)
     #: 获得环境的classobj

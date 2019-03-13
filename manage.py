@@ -24,5 +24,14 @@ manager.add_command("shell", Shell(make_context=make_shell_context))
 #: flask_migrate提供的MigrateCommand可以加入manager的对象，就可以用数据库迁移命令了
 manager.add_command('db', MigrateCommand)
 
+
+@manager.command
+def test():
+    """运行单元测试"""
+    import unittest
+    tests = unittest.defaultTestLoader.discover('tests')
+    unittest.TextTestRunner(verbosity=2).run(tests)
+
+
 if __name__ == "__main__":
     manager.run()
