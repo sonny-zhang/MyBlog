@@ -5,14 +5,13 @@
 from datetime import datetime
 from flask import render_template, session, flash
 from flask.views import MethodView
-from app.forms import *
 
 
 class Index(MethodView):
     def get(self):
-        form = NameForm()
-        return render_template('index.html', current_time=datetime.utcnow(), form=form)
+        return render_template('index.html', current_time=datetime.utcnow())
 
+    """
     def post(self):
         form = NameForm()
         if form.validate_on_submit():
@@ -23,4 +22,5 @@ class Index(MethodView):
             session['name'] = form.name.data
             # return redirect(url_for('main.index'))
         return render_template('index.html', current_time=datetime.utcnow(),
-                               form=form, name=session.get('name'))
+                               form=form)
+    """

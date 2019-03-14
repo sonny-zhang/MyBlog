@@ -19,11 +19,19 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{ url_for('main.index') }}">Sonny</a>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">Blog</a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('main.index') }}">最新文章</a></li>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <!--current_user由Flask-Login定义，is_authenticated方法:未登录返回False-->
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('auth.logout') }}">退出</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}">登录</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
