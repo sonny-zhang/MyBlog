@@ -12,8 +12,7 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     FLASK_MAIL_SUBJECT_PREFIX = '[Sonny]'
-    FLASK_MAIL_SENDER = 'Sonny <sonny.zhang@foxmail.com>'
-    FLASK_ADMIN = os.environ.get('FLASK_ADMIN')
+    FLASK_ADMIN = ''
 
     #: init_app()方法，参数是application实例。
     #: 功能：可以执行当前环境配置的初始化
@@ -31,6 +30,7 @@ class Development(Config):
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'sqlite:///' +\
                               os.path.join(basedir, 'data-dev.sqlite')
+    FLASK_MAIL_SENDER = os.environ.get('MAIL_USERNAME')
     # 自动提交数据变更
 
 
