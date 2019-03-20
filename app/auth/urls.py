@@ -11,4 +11,7 @@ auth.add_url_rule('/register', view_func=Register.as_view('register'))
 auth.add_url_rule('/unconfirmed', view_func=Unconfirmed.as_view('unconfirmed'))
 auth.add_url_rule('/confirm/<token>', view_func=Confirm.as_view('confirm'))
 auth.add_url_rule('/resend_confirmation', view_func=ResendConfirmation.as_view('resend_confirmation'))
+auth.add_url_rule('/change_password', view_func=Change_Password.as_view('change_password'))
+auth.add_url_rule('/password_reset', view_func=Password_Reset.as_view('password_reset'))
+auth.add_url_rule('/change_email', view_func=Change_Email_Request.as_view('change_email'))
 

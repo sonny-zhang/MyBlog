@@ -9,7 +9,7 @@ from app import db
 from . import auth
 from app.email import send_email
 from app.models import User
-from .forms import LoginForm, RegistrationForm
+from .forms import LoginForm, RegistrationForm, PasswordResetRequestForm, ChangePasswordForm, ChangeEmailForm
 
 
 @auth.before_app_request
@@ -61,12 +61,34 @@ class Confirm(MethodView):
         return redirect(url_for('main.index'))
 
 
+class Register(MethodView):
+    def get(self):
+        form = RegistrationForm()
+        return render_template('auth/register.html', form=form)
+
+    def post(self):
+        """注册"""
+        form = RegistrationForm()
+        if form.validate_on_submit():
+            user = User(email=form.email.data,
+                        username=form.username.data,
+                        password=form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            token = user.generate_confirmation_token()
+            send_email(user.email, '认证您的账户', 'auth/email/confirm', user=user, token=token)
+            flash('注册成功！认证邮件已经发到您的邮箱。')
+            return redirect(url_for('main.index'))
+        return render_template('auth/register.html', form=form)
+
+
 class Login(MethodView):
     def get(self):
         form = LoginForm()
         return render_template('auth/login.html', form=form)
 
     def post(self):
+        """登录"""
         form = LoginForm()
         if form.validate_on_submit():
             user = User.query.filter_by(email=form.email.data).first()
@@ -87,31 +109,87 @@ class Login(MethodView):
 class Logout(MethodView):
     @login_required
     def get(self):
+        """登出"""
         logout_user()
         flash('您已经退出登录')
         return redirect(url_for('main.index'))
 
 
-class Password_Reset_Request(MethodView):
+class Change_Password(MethodView):
+    @login_required
     def get(self):
-        pass
+        form = ChangePasswordForm()
+        return render_template('auth/change_password.html', form=form)
 
-
-class Register(MethodView):
-    def get(self):
-        form = RegistrationForm()
-        return render_template('auth/register.html', form=form)
-
+    @login_required
     def post(self):
-        form = RegistrationForm()
+        """修改密码"""
+        form = ChangePasswordForm()
         if form.validate_on_submit():
-            user = User(email=form.email.data,
-                        username=form.username.data,
-                        password=form.password.data)
-            db.session.add(user)
+            if current_user.verify_password(form.old_password.data):
+                current_user.password = form.password.data
+                db.session.add(current_user)
+                db.session.commit()
+                flash('您的密码已经修改成功！')
+                return redirect(url_for('main.index'))
+            else:
+                flash('原密码无效！')
+        return render_template('auth/change_password.html', form=form)
+
+
+class Password_Reset(MethodView):
+    @login_required
+    def get(self):
+        form = PasswordResetRequestForm()
+        return render_template('auth/reset_password.html', form=form)
+
+    @login_required
+    def post(self):
+        """重置密码：通过邮件里的链接去重置"""
+        form = PasswordResetRequestForm()
+        if form.validate_on_submit():
+            user = User.query.filter_by(email=form.email.data).first()
+            if user:
+                token = user.generate_reset_token()
+                send_email(user.email, '验证您的账户', 'auth/email/reset_password',
+                           user=user, token=token)
+                flash('请到你的邮箱确认要进行重置密码操作！')
+                return redirect(url_for('auth.login'))
+            flash('邮箱无效！')
+        return render_template('auth/reset_password.html', form=form)
+
+
+class Change_Email_Request(MethodView):
+    @login_required
+    def get(self):
+        form = ChangeEmailForm()
+        return render_template('auth/change_email.html', form=form)
+
+    @login_required
+    def post(self):
+        form = ChangeEmailForm()
+        if form.validate_on_submit():
+            if current_user.verify_password(form.password.data):
+                new_email = form.email.data
+                token = current_user.generate_email_change_token(new_email)
+                send_email(new_email, '验证您的邮箱地址', 'auth/email/change_email',
+                           user=current_user, token=token)
+                flash('验证邮件已经发到您的邮箱里！')
+                return redirect(url_for('main.index'))
+            else:
+                flash('无效的邮箱或密码！')
+        return render_template('auth/change_email.html', form=form)
+
+
+class Change_Email(MethodView):
+    def get(self, token):
+        if current_user.change_email(token):
             db.session.commit()
-            token = user.generate_confirmation_token()
-            send_email(user.email, '认证您的账户', 'auth/email/confirm', user=user, token=token)
-            flash('注册成功！认证邮件已经发到您的邮箱。')
-            return redirect(url_for('main.index'))
-        return render_template('auth/register.html', form=form)
+            flash('您的邮箱地址已经修改成功了！')
+        else:
+            flash('无效的请求！')
+        return redirect(url_for('main.index'))
+
+
+
+
