@@ -145,7 +145,7 @@ class Password_Reset(MethodView):
 
     @login_required
     def post(self):
-        """重置密码：通过邮件里的链接去重置"""
+        """重置密码：需要通过邮件里的链接去重置"""
         form = PasswordResetRequestForm()
         if form.validate_on_submit():
             user = User.query.filter_by(email=form.email.data).first()

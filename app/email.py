@@ -14,6 +14,13 @@ def send_async_email(app, msg):
 
 
 def send_email(to, subject, template, **kwargs):
+    """多线程发送邮件
+    :param to: 接收人
+    :param subject: 邮件主题
+    :param template: 邮件模板
+    :param kwargs: 其他dictionary参数
+    :return: 发送事件
+    """
     app = current_app._get_current_object()
     msg = Message(current_app.config['FLASK_MAIL_SUBJECT_PREFIX'] + subject,
                   sender=current_app.config['MAIL_USERNAME'], recipients=[to])

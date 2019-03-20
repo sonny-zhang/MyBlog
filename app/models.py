@@ -47,8 +47,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_confirmation_token(self, expiration=3600):
-        """
-        将数据加密生成token
+        """验证账户的token: 使用User.id生成token
         :param expiration: 生效时长，秒
         :return: token
         """
@@ -69,6 +68,15 @@ class User(UserMixin, db.Model):
         self.confirmed = True
         db.session.add(self)
         return True
+
+    def generate_reset_token(self, expiration=3600):
+        """重置账户密码的token: 使用User.id生成token
+        :param expiration: 生效时长，秒
+        :return: token
+        """
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        #: 指定用户的id为加密数据，因为id只有数据库知道
+        return s.dumps({'reset': self.id})
 
 
 @login_manager.user_loader
