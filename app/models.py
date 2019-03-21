@@ -47,7 +47,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_confirmation_token(self, expiration=3600):
-        """验证账户的token: 使用User.id生成token
+        """生成验证账户的token: 使用User.id生成token
         :param expiration: 生效时长，秒
         :return: token
         """
@@ -56,6 +56,7 @@ class User(UserMixin, db.Model):
         return s.dumps({'confirm': self.id})
 
     def confirm(self, token):
+        """认证账户：校验token+设置User.confirmed为True"""
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             #: 验证加密方式符合服务器设置的SECRET_KEY、expiration
@@ -77,6 +78,48 @@ class User(UserMixin, db.Model):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         #: 指定用户的id为加密数据，因为id只有数据库知道
         return s.dumps({'reset': self.id})
+
+    @staticmethod
+    def reset_password(token, new_password):
+        """检查token和重置新密码
+        :param token: url后缀的token
+        :param new_password:
+        :return: True
+        """
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        user = User.query.get(data.get('reset'))
+        if user is None:
+            return False
+        user.password = new_password
+        db.session.add(user)
+        return True
+
+    def generate_email_change_token(self, new_email, expiration=3600):
+        """生成修改邮箱功能使用的token"""
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps(
+            {'change_email': self.id, 'new_email': new_email}).decode('utf-8')
+
+    def change_email(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'))
+        except:
+            return False
+        if data.get('change_email') != self.id:
+            return False
+        new_email = data.get('new_email')
+        if new_email is None:
+            return False
+        if self.query.filter_by(email=new_email).first() is not None:
+            return False
+        self.email = new_email
+        db.session.add(self)
+        return True
 
 
 @login_manager.user_loader

@@ -9,7 +9,8 @@ from app import db
 from . import auth
 from app.email import send_email
 from app.models import User
-from .forms import LoginForm, RegistrationForm, PasswordResetRequestForm, ChangePasswordForm, ChangeEmailForm
+from .forms import LoginForm, RegistrationForm, PasswordResetRequestForm, ChangePasswordForm, \
+    ChangeEmailForm, PasswordResetForm
 
 
 @auth.before_app_request
@@ -137,13 +138,11 @@ class Change_Password(MethodView):
         return render_template('auth/change_password.html', form=form)
 
 
-class Password_Reset(MethodView):
-    @login_required
+class Password_Reset_Request(MethodView):
     def get(self):
         form = PasswordResetRequestForm()
         return render_template('auth/reset_password.html', form=form)
 
-    @login_required
     def post(self):
         """重置密码：需要通过邮件里的链接去重置"""
         form = PasswordResetRequestForm()
@@ -156,6 +155,28 @@ class Password_Reset(MethodView):
                 flash('请到你的邮箱确认要进行重置密码操作！')
                 return redirect(url_for('auth.login'))
             flash('邮箱无效！')
+        return render_template('auth/reset_password.html', form=form)
+
+
+class Password_Reset(MethodView):
+    def get(self, token):
+        if not current_user.is_anonymous:
+            return redirect(url_for('main.index'))
+        form = PasswordResetForm()
+        return render_template('auth/reset_password.html', form=form)
+
+    def post(self, token):
+        if not current_user.is_anonymous:
+            return redirect(url_for('main.index'))
+        form = PasswordResetForm()
+        if form.validate_on_submit():
+            if User.reset_password(token, form.password.data):
+                db.session.commit()
+                flash('您的密码已经修改完成，请登录！')
+                return redirect(url_for('auth.login'))
+            else:
+                flash('认证链接无效或者已经过期！请重新获取认证')
+                return redirect(url_for('auth.password_reset_request'))
         return render_template('auth/reset_password.html', form=form)
 
 

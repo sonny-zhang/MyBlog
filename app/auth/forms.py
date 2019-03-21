@@ -43,18 +43,32 @@ class ChangePasswordForm(FlaskForm):
     """修改密码表单"""
     old_password = PasswordField('Old Password', validators=[DataRequired()])
     password = PasswordField('New Password', validators=[DataRequired(), Length(6, 18), EqualTo('password2',
-                                                                                 message='Passwords must match.')])
+                                                                                                message='Passwords must match.')])
     password2 = PasswordField('Confirm New Password', validators=[DataRequired(), Length(6, 18)])
     submit = SubmitField('Submit')
 
 
 class PasswordResetRequestForm(FlaskForm):
     """重置秘密表单"""
-    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
-    submit = SubmitField('Submit')
+    email = StringField('要重置密码的邮箱', validators=[DataRequired(), Length(1, 64), Email()])
+    submit = SubmitField('提交')
+
+
+class PasswordResetForm(FlaskForm):
+    password = PasswordField('新密码', validators=[
+        DataRequired(), Length(6, 18, message='字段长度必须在6到18个字符之间。'), EqualTo('password2', message='密码必须一致')])
+    password2 = PasswordField('重复密码', validators=[DataRequired(), Length(6, 18, message='字段长度必须在6到18个字符之间。')])
+    submit = SubmitField('重置密码')
 
 
 class ChangeEmailForm(FlaskForm):
     """修改邮箱地址"""
-    pass
+    email = StringField('新邮箱', validators=[DataRequired(), Length(1, 64),
+                                                 Email()])
+    password = PasswordField('密码', validators=[DataRequired()])
+    submit = SubmitField('提交')
 
+    def validate_email(self, field):
+        """验证邮箱没有被注册"""
+        if User.query.filter_by(email=field.data).first():
+            raise ValidationError('邮箱已经被注册')
