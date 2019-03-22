@@ -12,7 +12,7 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     FLASK_MAIL_SUBJECT_PREFIX = '[Sonny]'
-    FLASK_ADMIN = ''
+    FLASK_ADMIN = os.environ.get('FLASK_ADMIN') or ''
 
     #: init_app()方法，参数是application实例。
     #: 功能：可以执行当前环境配置的初始化

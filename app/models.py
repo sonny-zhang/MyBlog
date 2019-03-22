@@ -5,15 +5,88 @@
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager, db
+
+
+class Permission:
+    FOLLOW = 1  #: 关注他人
+    COMMENT = 2  #: 在他人撰写的文章中发布评论
+    WEITE = 4  #: 写原创文章
+    MODERATE = 8  #: 查处他人发表的不当评论
+    ADMIN = 16  #: 管理网站
 
 
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
+    default = db.Column(db.Boolean, default=False, index=True)
+    permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
+
+    def __init__(self, **kwargs):
+        """定义默认角色为匿名角色"""
+        super(Role, self).__init__(**kwargs)
+        if self.permissions is None:
+            self.permissions = 0
+
+    @staticmethod
+    def insert_roles():
+        """创建角色: 运行
+        python manage.py shell
+        Role.insert_roles()
+        Role.query.all()
+        """
+        roles = {
+            'User': [Permission.FOLLOW, Permission.COMMENT, Permission.WEITE],
+            'Moderator': [Permission.FOLLOW, Permission.COMMENT,
+                          Permission.WEITE, Permission.MODERATE],
+            'Admin': [Permission.FOLLOW, Permission.COMMENT,
+                      Permission.WEITE, Permission.MODERATE,
+                      Permission.ADMIN]
+        }
+        default_role = 'User'
+        for r in roles:
+            role = Role.query.filter_by(name=r).first()
+            if role is None:
+                #: 写死的roles字典里没有找到，就回去创建角色name
+                role = Role(name=r)
+            role.reset_permissions()
+            for perm in roles[r]:
+                role.add_permission(perm)
+            role.default = (role.name == default_role)
+            db.session.add(role)
+        db.session.commit()
+
+    def add_permission(self, perm):
+        """添加权限
+        :param perm: 权限位
+        :return: None
+        """
+        if not self.has_permission(perm):
+            self.permissions += perm
+
+    def remove_permission(self, perm):
+        """删除权限
+        :param perm:权限位
+        :return: None
+        """
+        if self.has_permission(perm):
+            self.permissions -= perm
+
+    def reset_permissions(self):
+        """重置角色权限位0匿名角色
+        :return: None
+        """
+        self.permissions = 0
+
+    def has_permission(self, perm):
+        """判断是否有权限
+        :param perm: 权限位
+        :return: True/False
+        """
+        return self.permissions & perm == perm
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -28,6 +101,15 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     confirmed = db.Column(db.Boolean, default=False)
+
+    def __init__(self, **kwargs):
+        """构造函数赋予用户角色"""
+        super(User, self).__init__(**kwargs)
+        if self.role is None:
+            if self.email == current_app.config['FLASK_ADMIN']:
+                self.role = Role.query.filter_by(name='Administrator').first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -121,10 +203,34 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    def can(self, perm):
+        """在请求和赋予角色的权限间进行位运算
+        :param perm: 权限位
+        :return: 角色中包含请求的所有权限位，返回True; 否则False
+        """
+        return self.role is not None and self.role.has_permission(perm)
+
+    def is_administrator(self):
+        """检查管理员权限
+        :return: True/False
+        """
+        return self.can(Permission.ADMIN)
+
+
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+
+
+login_manager.anonymous_user = AnonymousUser
+
 
 @login_manager.user_loader
 def load_user(user_id):
-    """指定用户标识符的回调函数
+    """flask_login要求实现的回调函数，指定用户标识符的回调函数
     找到用户的id返回用户对象，否则返回None
     """
     return User.query.get(int(user_id))
