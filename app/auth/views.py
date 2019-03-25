@@ -15,12 +15,13 @@ from .forms import LoginForm, RegistrationForm, PasswordResetRequestForm, Change
 
 @auth.before_app_request
 def before_request():
-    """拦截app请求: 登录了但是没有认证->Unconfirmed"""
-    if current_user.is_authenticated \
-            and not current_user.confirmed \
-            and request.blueprint != 'auth' \
-            and request.endpoint != 'static':
-        return redirect(url_for('auth.unconfirmed'))
+    """拦截app请求: 登录了但是没有认证(更新访问时间)->Unconfirmed"""
+    if current_user.is_authenticated:
+        current_user.ping()
+        if not current_user.confirmed \
+                and request.blueprint != 'auth' \
+                and request.endpoint != 'static':
+            return redirect(url_for('auth.unconfirmed'))
 
 
 class Unconfirmed(MethodView):
@@ -46,7 +47,7 @@ class ResendConfirmation(MethodView):
 class Confirm(MethodView):
     @login_required
     def get(self, token):
-        """认证用户
+        """认证注册用户
         :param token: 根据用户的id生成的token
         :return: index.html
         """

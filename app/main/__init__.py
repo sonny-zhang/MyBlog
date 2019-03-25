@@ -15,5 +15,6 @@ from app.models import Permission
 
 @main.app_context_processor
 def inject_permissions():
-    """将Permission添加到上下文处理器"""
+    """为了不用每次响应都要添加一个权限参数：
+    将Permission添加到上下文处理器"""
     return dict(Permission=Permission)

@@ -2,6 +2,7 @@
 # @Author   : sonny-zhang
 # @FileName : models.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
+from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app
@@ -101,6 +102,11 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     confirmed = db.Column(db.Boolean, default=False)
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
 
     def __init__(self, **kwargs):
         """构造函数赋予用户角色"""
@@ -129,7 +135,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_confirmation_token(self, expiration=3600):
-        """生成验证账户的token: 使用User.id生成token
+        """生成认证注册账户的token: 使用User.id生成token
         :param expiration: 生效时长，秒
         :return: token
         """
@@ -138,7 +144,7 @@ class User(UserMixin, db.Model):
         return s.dumps({'confirm': self.id})
 
     def confirm(self, token):
-        """认证账户：校验token+设置User.confirmed为True"""
+        """认证注册账户：校验token+设置User.confirmed为True"""
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             #: 验证加密方式符合服务器设置的SECRET_KEY、expiration
@@ -204,17 +210,22 @@ class User(UserMixin, db.Model):
         return True
 
     def can(self, perm):
-        """在请求和赋予角色的权限间进行位运算
+        """检查用户是否有权限操作：在请求和赋予角色的权限间进行位运算
         :param perm: 权限位
         :return: 角色中包含请求的所有权限位，返回True; 否则False
         """
         return self.role is not None and self.role.has_permission(perm)
 
     def is_administrator(self):
-        """检查管理员权限
+        """检查是否有管理员权限，因为经常使用所以分离从上个方法分离出来
         :return: True/False
         """
         return self.can(Permission.ADMIN)
+
+    def ping(self):
+        """更新最后一次访问时间"""
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
 
 
 class AnonymousUser(AnonymousUserMixin):

@@ -9,7 +9,7 @@ from .models import Permission
 
 
 def permission_required(permission):
-    """[带参数的装饰器]检查常规权限
+    """[带参数的装饰器]将检查常规权限封装
     :param permission: 权限位
     :return: 函数
     """
@@ -24,5 +24,5 @@ def permission_required(permission):
 
 
 def admin_required(f):
-    """检查admin权限"""
+    """检查admin权限封装"""
     return permission_required(Permission.ADMIN)(f)

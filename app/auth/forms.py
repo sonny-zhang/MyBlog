@@ -49,12 +49,13 @@ class ChangePasswordForm(FlaskForm):
 
 
 class PasswordResetRequestForm(FlaskForm):
-    """重置秘密表单"""
+    """申请重置密码表单"""
     email = StringField('要重置密码的邮箱', validators=[DataRequired(), Length(1, 64), Email()])
     submit = SubmitField('提交')
 
 
 class PasswordResetForm(FlaskForm):
+    """重置密码表单"""
     password = PasswordField('新密码', validators=[
         DataRequired(), Length(6, 18, message='字段长度必须在6到18个字符之间。'), EqualTo('password2', message='密码必须一致')])
     password2 = PasswordField('重复密码', validators=[DataRequired(), Length(6, 18, message='字段长度必须在6到18个字符之间。')])
@@ -62,9 +63,8 @@ class PasswordResetForm(FlaskForm):
 
 
 class ChangeEmailForm(FlaskForm):
-    """修改邮箱地址"""
-    email = StringField('新邮箱', validators=[DataRequired(), Length(1, 64),
-                                                 Email()])
+    """修改邮箱地址表单"""
+    email = StringField('新邮箱', validators=[DataRequired(), Length(1, 64), Email()])
     password = PasswordField('密码', validators=[DataRequired()])
     submit = SubmitField('提交')
 
