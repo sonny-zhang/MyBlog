@@ -19,6 +19,7 @@ mail = Mail()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'auth.login'
+login_manager.login_message = '请先登录才能进入该页面'
 
 
 def create_app(config_name):

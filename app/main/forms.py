@@ -22,8 +22,7 @@ class EditProfileForm(FlaskForm):
 
 
 class EditProfileAdminForm(FlaskForm):
-    email = StringField('邮箱', validators=[DataRequired(), Length(1, 64),
-                                             Email(message='无效的邮箱地址.')])
+    email = StringField('邮箱', validators=[DataRequired(), Length(1, 64), Email(message='无效的邮箱地址.')])
     username = StringField('用户名', validators=[
         DataRequired(), Length(1, 64),
         Regexp('[\u4e00-\u9fa5A-Za-z0-9_.]*$', 0,
