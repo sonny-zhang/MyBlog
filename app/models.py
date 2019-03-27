@@ -5,15 +5,16 @@
 from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import current_app
+from flask import current_app, request
 from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager, db
+import hashlib
 
 
 class Permission:
     FOLLOW = 1  #: 关注他人
     COMMENT = 2  #: 在他人撰写的文章中发布评论
-    WEITE = 4  #: 写原创文章
+    WRITE = 4  #: 写原创文章
     MODERATE = 8  #: 查处他人发表的不当评论
     ADMIN = 16  #: 管理网站
 
@@ -40,11 +41,11 @@ class Role(db.Model):
         Role.query.all()
         """
         roles = {
-            'User': [Permission.FOLLOW, Permission.COMMENT, Permission.WEITE],
+            'User': [Permission.FOLLOW, Permission.COMMENT, Permission.WRITE],
             'Moderator': [Permission.FOLLOW, Permission.COMMENT,
-                          Permission.WEITE, Permission.MODERATE],
+                          Permission.WRITE, Permission.MODERATE],
             'Admin': [Permission.FOLLOW, Permission.COMMENT,
-                      Permission.WEITE, Permission.MODERATE,
+                      Permission.WRITE, Permission.MODERATE,
                       Permission.ADMIN]
         }
         default_role = 'User'
@@ -107,6 +108,7 @@ class User(UserMixin, db.Model):
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    avatar_hash = db.Column(db.String(32))
 
     def __init__(self, **kwargs):
         """构造函数赋予用户角色"""
@@ -116,6 +118,8 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(name='Administrator').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+        if self.email is not None and self.avatar_hash is None:
+            self.avatar_hash = self.gravatar_hash()
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -190,15 +194,16 @@ class User(UserMixin, db.Model):
         """生成修改邮箱功能使用的token"""
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps(
-            {'change_email': self.id, 'new_email': new_email}).decode('utf-8')
+            {'users_id': self.id, 'new_email': new_email}).decode('utf-8')
 
     def change_email(self, token):
+        """修改邮箱：验证token里users_id，修改的邮箱不在数据库"""
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token.encode('utf-8'))
         except:
             return False
-        if data.get('change_email') != self.id:
+        if data.get('users_id') != self.id:
             return False
         new_email = data.get('new_email')
         if new_email is None:
@@ -206,6 +211,7 @@ class User(UserMixin, db.Model):
         if self.query.filter_by(email=new_email).first() is not None:
             return False
         self.email = new_email
+        self.avatar_hash = self.gravatar_hash()
         db.session.add(self)
         return True
 
@@ -225,7 +231,18 @@ class User(UserMixin, db.Model):
     def ping(self):
         """更新最后一次访问时间"""
         self.last_seen = datetime.utcnow()
-        db.session.add(self)
+        self.add = db.session.add(self)
+
+    def gravatar_hash(self):
+        return hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
+
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        """生成个人全球统一头像url"""
+        url = 'https://www.gravatar.com/avatar'
+        hash = self.avatar_hash or self.gravatar_hash()
+        u = '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
+            url=url, hash=hash, size=size, default=default, rating=rating)
+        return u
 
 
 class AnonymousUser(AnonymousUserMixin):
