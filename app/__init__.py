@@ -15,7 +15,7 @@ bootstrap = Bootstrap()
 db = SQLAlchemy()
 moment = Moment()
 mail = Mail()
-pagedown=PageDown()
+pagedown = PageDown()
 #: 初始化login用户认证的等级，设置登录函数的路径
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
