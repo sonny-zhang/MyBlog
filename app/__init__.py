@@ -8,13 +8,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_moment import Moment
 from flask_mail import Mail
 from flask_login import LoginManager
+from flask_pagedown import PageDown
 from config import config
 
 bootstrap = Bootstrap()
 db = SQLAlchemy()
 moment = Moment()
 mail = Mail()
-
+pagedown=PageDown()
 #: 初始化login用户认证的等级，设置登录函数的路径
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
@@ -35,6 +36,7 @@ def create_app(config_name):
     moment.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
+    pagedown.init_app(app)
 
     #: 注册蓝图
     from .main import main as main_blueprint

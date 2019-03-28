@@ -1,0 +1,38 @@
+<ul class="articles">
+    {% for article in articles %}
+    <li class="article">
+        <div class="article-thumbnail">
+            <a href="{{ url_for('main.user', username=article.author.username) }}">
+                <img class="img-rounded profile-thumbnail" src="{{ article.author.gravatar(size=40) }}">
+            </a>
+        </div>
+        <div class="article-content">
+            <div class="article-date">{{ moment(article.timestamp).fromNow() }}</div>
+            <div class="article-author"><a href="{{ url_for('main.user', username=article.author.username) }}">{{ article.author.username }}</a></div>
+             <div class="article-body">
+                {% if article.body_html %}
+                    {# | safe后缀：不要转义成HTML#}
+                    {{ article.body_html | safe }}
+                {% else %}
+                    {{ article.body }}
+                {% endif %}
+            </div>
+        <div class="article-footer">
+            {% if current_user == article.author %}
+                <a href="{{ url_for('main.edit', id=article.id) }}">
+                    <span class="label label-primary">编辑</span>
+                </a>
+            {% elif current_user.is_administrator() %}
+                <a href="{{ url_for('main.edit', id=article.id) }}">
+                    <span class="label label-danger">编辑 [Admin]</span>
+                </a>
+            {% endif %}
+
+            <a href="{{ url_for('main.article', id=article.id) }}">
+                <span class="label label-default">详情页</span>
+            </a>
+        </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>

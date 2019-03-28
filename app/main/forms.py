@@ -5,6 +5,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, BooleanField, SelectField
 from wtforms.validators import InputRequired, DataRequired, Length, Email, Regexp
+from flask_pagedown.fields import PageDownField
 from wtforms import ValidationError
 from app.models import Role, User
 
@@ -12,6 +13,7 @@ from app.models import Role, User
 class NameForm(FlaskForm):
     name = StringField('用户名', validators=[InputRequired()])
     submit = SubmitField('提交')
+
 
 class EditProfileForm(FlaskForm):
     """编辑个人资料"""
@@ -48,3 +50,8 @@ class EditProfileAdminForm(FlaskForm):
         if field.data != self.user.username and \
                 User.query.filter_by(username=field.data).first():
             raise ValidationError('用户名已经存在')
+
+
+class ArticleForm(FlaskForm):
+    body = PageDownField('您有什么想说的？', validators=[DataRequired()])
+    submit = SubmitField('提交')

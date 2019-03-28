@@ -4,7 +4,7 @@
 # @Blog     : http://www.cnblogs.com/1fengchen1/
 import os
 from app import create_app, db
-from app.models import Role, User
+from app.models import Role, User, Permission, Article
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
@@ -16,7 +16,8 @@ migrate = Migrate(app, db)
 
 #: 集成到Python Shell
 def make_shell_context():
-    return dict(app=app, db=db, User=User, Role=Role)
+    return dict(app=app, db=db, User=User, Role=Role,
+                Permission=Permission, Article=Article)
 
 
 #: Shell命令注册了make_context回调函数，函数里的对象能直接导入shell
@@ -35,3 +36,10 @@ def test():
 
 if __name__ == "__main__":
     manager.run()
+    #: 创建角色
+    Role.insert_roles()
+    Role.query.all()
+    #: 创建假测试数据
+    from app.fake import users, articles
+    users()
+    articles()

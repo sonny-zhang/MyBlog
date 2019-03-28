@@ -6,9 +6,11 @@ from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app, request
+from markdown import markdown
 from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager, db
 import hashlib
+import bleach
 
 
 class Permission:
@@ -109,6 +111,7 @@ class User(UserMixin, db.Model):
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
+    articles = db.relationship('Article', backref='author', lazy='dynamic')
 
     def __init__(self, **kwargs):
         """构造函数赋予用户角色"""
@@ -262,3 +265,24 @@ def load_user(user_id):
     找到用户的id返回用户对象，否则返回None
     """
     return User.query.get(int(user_id))
+
+
+class Article(db.Model):
+    __tablename__ = 'articles'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    @staticmethod
+    def on_changed_body(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
+                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                        'h1', 'h2', 'h3', 'p']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags, strip=True))
+
+
+db.event.listen(Article.body, 'set', Article.on_changed_body)
