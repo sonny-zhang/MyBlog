@@ -19,6 +19,7 @@ flask-wtf = "*"
 markdown = "*"
 flask-login = "*"
 bleach = "*"
+uwsgi = "*"
 
 [requires]
 python_version = "3.7"
