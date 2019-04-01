@@ -14,6 +14,7 @@ main.add_url_rule('/edit/<int:id>', view_func=ArticleEdit.as_view('edit'))
 main.add_url_rule('/follow/<username>', view_func=Follow.as_view('follow'))
 main.add_url_rule('/unfollow/<username>', view_func=UnFollow.as_view('unfollow'))
 main.add_url_rule('/followers/<username>', view_func=Followers.as_view('followers'))
-main.add_url_rule('/followers-by/<username>', view_func=FollowedBy.as_view('followed_by'))
-
+main.add_url_rule('/followed_by/<username>', view_func=FollowedBy.as_view('followed_by'))
+main.add_url_rule('/show_all', view_func=ShowAll.as_view('show_all'))
+main.add_url_rule('/show_followed', view_func=ShowFollowed.as_view('show_followed'))
 

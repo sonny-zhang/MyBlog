@@ -2,7 +2,7 @@
 # @Author   : sonny-zhang
 # @FileName : views.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
-from flask import render_template, redirect, url_for, abort, flash, request, current_app
+from flask import render_template, redirect, url_for, abort, flash, request, current_app, make_response
 from flask_login import login_required, current_user
 from flask.views import MethodView
 from sqlalchemy import desc
@@ -16,11 +16,18 @@ class Index(MethodView):
     def get(self):
         form = ArticleForm()
         page = request.args.get('page', 1, type=int)
-        pagination = Article.query.order_by(desc(Article.timestamp)).paginate(
+        show_followed = False
+        if current_user.is_authenticated:
+            show_followed = bool(request.cookies.get('show_followed', ''))
+        if show_followed:
+            query = current_user.followed_articles
+        else:
+            query = Article.query
+        pagination = query.order_by(desc(Article.timestamp)).paginate(
             page, per_page=current_app.config['FLASK_ARTICLES_PER_PAGE'],
             error_out=False)
         articles = pagination.items
-        return render_template('index.html', form=form, articles=articles,
+        return render_template('index.html', form=form, articles=articles, show_followed=show_followed,
                                pagination=pagination)
 
     def post(self):
@@ -33,11 +40,18 @@ class Index(MethodView):
             db.session.commit()
             return redirect(url_for('main.index'))
         page = request.args.get('page', 1, type=int)
-        pagination = Article.query.order_by(desc(Article.timestamp)).paginate(
+        show_followed = False
+        if current_user.is_authenticated:
+            show_followed = bool(request.cookies.get('show_followed', ''))
+        if show_followed:
+            query = current_user.followed_articles
+        else:
+            query = Article.query
+        pagination = query.order_by(desc(Article.timestamp)).paginate(
             page, per_page=current_app.config['FLASK_ARTICLES_PER_PAGE'],
             error_out=False)
         articles = pagination.items
-        return render_template('index.html', form=form, articles=articles,
+        return render_template('index.html', form=form, articles=articles, show_followed=show_followed,
                                pagination=pagination)
 
 
@@ -167,6 +181,7 @@ class Follow(MethodView):
             flash('您已经关注了该用户，不用再次关注.')
             return redirect(url_for('.user', username=username))
         current_user.follow(user)
+        db.session.commit()
         flash('您关注了用户%s.' % username)
         return redirect(url_for('.user', username=username))
 
@@ -184,6 +199,7 @@ class UnFollow(MethodView):
             flash('您还没有关注该用户.')
             return redirect(url_for('.user', username=username))
         current_user.unfollow(user)
+        db.session.commit()
         flash('您不再关注%s.' % username)
         return redirect(url_for('.user', username=username))
 
@@ -224,3 +240,20 @@ class FollowedBy(MethodView):
                                follows=follows)
 
 
+class ShowAll(MethodView):
+    @login_required
+    def get(self):
+        """所有文章"""
+        resp = make_response(redirect(url_for('.index')))
+        #: 设置response的cookie值
+        resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+        return resp
+
+
+class ShowFollowed(MethodView):
+    @login_required
+    def get(self):
+        """关注者的文章"""
+        resp = make_response(redirect(url_for('.index')))
+        resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+        return resp

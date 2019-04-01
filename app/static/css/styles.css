@@ -5,11 +5,18 @@
     min-height: 260px;
     margin-left: 280px;
 }
+div.article-tabs {
+    margin-top: 16px;
+}
 ul.articles {
     list-style-type: none;
     padding: 0px;
     margin: 16px 0px 0px 0px;
     border-top: 1px solid #e0e0e0;
+}
+div.article-tabs ul.posts {
+    margin: 0px;
+    border-top: none;
 }
 ul.articles li.article {
     padding: 8px;

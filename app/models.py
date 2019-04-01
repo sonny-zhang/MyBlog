@@ -99,8 +99,10 @@ class Role(db.Model):
 class Follow(db.Model):
     """关注功能的关联表"""
     __tablename__ = 'follows'
+    #: 关注者A
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'),
                             primary_key=True)
+    #: 被关注者B  A关注了B
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'),
                             primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -135,6 +137,15 @@ class User(UserMixin, db.Model):
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
 
+    @staticmethod
+    def add_self_follows():
+        """更新新现有用户：<关注自己，在关注列表显示自己的文章>"""
+        for user in User.query.all():
+            if not user.is_following(user):
+                user.follow(user)
+                db.session.add(user)
+                db.session.commit()
+
     def __init__(self, **kwargs):
         """构造函数赋予用户角色"""
         super(User, self).__init__(**kwargs)
@@ -145,6 +156,7 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(default=True).first()
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = self.gravatar_hash()
+        self.follow(self)
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -301,6 +313,12 @@ class User(UserMixin, db.Model):
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
 
+    @property
+    def followed_articles(self):
+        """SQL：关注者文章"""
+        return Article.query.join(Follow, Follow.followed_id == Article.author_id) \
+            .filter(Follow.follower_id == self.id)
+
 
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
@@ -322,6 +340,7 @@ def load_user(user_id):
 
 
 class Article(db.Model):
+    """文章"""
     __tablename__ = 'articles'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
