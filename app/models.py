@@ -40,7 +40,7 @@ class Role(db.Model):
         """创建角色: 运行
         python manage.py shell
         Role.insert_roles()
-        Role.query.all()
+        Role.query.all()·
         """
         roles = {
             'User': [Permission.FOLLOW, Permission.COMMENT, Permission.WRITE],
@@ -96,6 +96,16 @@ class Role(db.Model):
         return '<Role %r>' % self.name
 
 
+class Follow(db.Model):
+    """关注功能的关联表"""
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                            primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                            primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 #: 支持用户登录需要继承UserMixin，实现了用户已经登录/允许用户登录/普通用户/用户唯一标识
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -112,6 +122,18 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
     articles = db.relationship('Article', backref='author', lazy='dynamic')
+    #: 关注了谁
+    followed = db.relationship('Follow',
+                               foreign_keys=[Follow.follower_id],
+                               backref=db.backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    #: 被谁关注了
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.followed_id],
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
 
     def __init__(self, **kwargs):
         """构造函数赋予用户角色"""
@@ -246,6 +268,38 @@ class User(UserMixin, db.Model):
         u = '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
         return u
+
+    def follow(self, user):
+        """关注用户功能"""
+        if not self.is_following(user):
+            f = Follow(followed=user)
+            self.followed.append(f)
+
+    def unfollow(self, user):
+        """取消关注"""
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            self.followed.remove(f)
+
+    def is_following(self, user):
+        """【关注user】查询self是否关注了user
+        :param user: 要查询的user
+        :return: True/False
+        """
+        if user.id is None:
+            return False
+        return self.followed.filter_by(
+            followed_id=user.id).first() is not None
+
+    def is_followed_by(self, user):
+        """【被user关注】查询self是否被user关注了
+        :param user: 要查询的user
+        :return: True/False
+        """
+        if user.id is None:
+            return False
+        return self.followers.filter_by(
+            follower_id=user.id).first() is not None
 
 
 class AnonymousUser(AnonymousUserMixin):
