@@ -13,7 +13,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     FLASK_MAIL_SUBJECT_PREFIX = '[Sonny]'
     FLASK_ADMIN = os.environ.get('FLASK_ADMIN') or ''
-    FLASK_POSTS_PER_PAGE = 20   # 列表数据每页显示数据条数
+    FLASK_ARTICLES_PER_PAGE = 20   # 文章列表数据每页显示数据条数
+    FLASK_FOLLOWERS_PER_PAGE = 50  # 关注用户列表数据每页显示条数
 
     #: init_app()方法，参数是application实例。
     #: 功能：可以执行当前环境配置的初始化

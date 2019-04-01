@@ -8,7 +8,7 @@ from flask.views import MethodView
 from sqlalchemy import desc
 from app.models import User, Role, Permission, Article
 from app import db
-from app.decorators import admin_required
+from app.decorators import admin_required, permission_required
 from .forms import EditProfileAdminForm, EditProfileForm, ArticleForm
 
 
@@ -17,7 +17,7 @@ class Index(MethodView):
         form = ArticleForm()
         page = request.args.get('page', 1, type=int)
         pagination = Article.query.order_by(desc(Article.timestamp)).paginate(
-            page, per_page=current_app.config['FLASK_POSTS_PER_PAGE'],
+            page, per_page=current_app.config['FLASK_ARTICLES_PER_PAGE'],
             error_out=False)
         articles = pagination.items
         return render_template('index.html', form=form, articles=articles,
@@ -34,7 +34,7 @@ class Index(MethodView):
             return redirect(url_for('main.index'))
         page = request.args.get('page', 1, type=int)
         pagination = Article.query.order_by(desc(Article.timestamp)).paginate(
-            page, per_page=current_app.config['FLASK_POSTS_PER_PAGE'],
+            page, per_page=current_app.config['FLASK_ARTICLES_PER_PAGE'],
             error_out=False)
         articles = pagination.items
         return render_template('index.html', form=form, articles=articles,
@@ -152,3 +152,75 @@ class ArticleEdit(MethodView):
             return redirect(url_for('.post', id=article.id))
         form.body.data = article.body
         return render_template('edit_post.html', form=form)
+
+
+class Follow(MethodView):
+    @login_required
+    @permission_required(Permission.FOLLOW)
+    def get(self, username):
+        """关注用户username"""
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            flash('无效的用户.')
+            return redirect(url_for('.index'))
+        if current_user.is_following(user):
+            flash('您已经关注了该用户，不用再次关注.')
+            return redirect(url_for('.user', username=username))
+        current_user.follow(user)
+        flash('您关注了用户%s.' % username)
+        return redirect(url_for('.user', username=username))
+
+
+class UnFollow(MethodView):
+    @login_required
+    @permission_required(Permission.FOLLOW)
+    def get(self, username):
+        """取消关注用户username"""
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            flash('无效的用户.')
+            return redirect(url_for('.index'))
+        if not current_user.is_following(user):
+            flash('您还没有关注该用户.')
+            return redirect(url_for('.user', username=username))
+        current_user.unfollow(user)
+        flash('您不再关注%s.' % username)
+        return redirect(url_for('.user', username=username))
+
+
+class Followers(MethodView):
+    def get(self, username):
+        """展示username的粉丝们"""
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            flash('无效的用户.')
+            return redirect(url_for('.index'))
+        page = request.args.get('page', 1, type=int)
+        pagination = user.followers.paginate(
+            page, per_page=current_app.config['FLASK_FOLLOWERS_PER_PAGE'],
+            error_out=False)
+        follows = [{'user': item.follower, 'timestamp': item.timestamp}
+                   for item in pagination.items]
+        return render_template('followers.html', user=user, title="粉丝",
+                               endpoint='.followers', pagination=pagination,
+                               follows=follows)
+
+
+class FollowedBy(MethodView):
+    def get(self, username):
+        """展示username所关注者们"""
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            flash('无效的用户.')
+            return redirect(url_for('.index'))
+        page = request.args.get('page', 1, type=int)
+        pagination = user.followed.paginate(
+            page, per_page=current_app.config['FLASK_FOLLOWERS_PER_PAGE'],
+            error_out=False)
+        follows = [{'user': item.followed, 'timestamp': item.timestamp}
+                   for item in pagination.items]
+        return render_template('followers.html', user=user, title="关注",
+                               endpoint='.followed_by', pagination=pagination,
+                               follows=follows)
+
+

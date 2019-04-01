@@ -11,4 +11,9 @@ main.add_url_rule('/edit-profile', view_func=EditProfile.as_view('edit_profile')
 main.add_url_rule('/edit-profile/<int:id>', view_func=EditProfileAdmin.as_view('edit_profile_admin'))
 main.add_url_rule('/article/<int:id>', view_func=ArticleView.as_view('article'))
 main.add_url_rule('/edit/<int:id>', view_func=ArticleEdit.as_view('edit'))
+main.add_url_rule('/follow/<username>', view_func=Follow.as_view('follow'))
+main.add_url_rule('/unfollow/<username>', view_func=UnFollow.as_view('unfollow'))
+main.add_url_rule('/followers/<username>', view_func=Followers.as_view('followers'))
+main.add_url_rule('/followers-by/<username>', view_func=FollowedBy.as_view('followed_by'))
+
 
