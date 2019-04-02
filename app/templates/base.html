@@ -30,6 +30,9 @@
                     {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
+                    {% if current_user.can(Permission.MODERATE) %}
+                        <li><a href="{{ url_for('main.moderate') }}">管理评论</a></li>
+                    {% endif %}
                     <!--current_user由Flask-Login定义，is_authenticated方法:未登录返回False-->
                     {% if current_user.is_authenticated %}
                         <li class="dropdown">

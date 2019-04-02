@@ -17,4 +17,8 @@ main.add_url_rule('/followers/<username>', view_func=Followers.as_view('follower
 main.add_url_rule('/followed_by/<username>', view_func=FollowedBy.as_view('followed_by'))
 main.add_url_rule('/show_all', view_func=ShowAll.as_view('show_all'))
 main.add_url_rule('/show_followed', view_func=ShowFollowed.as_view('show_followed'))
+main.add_url_rule('/moderate', view_func=Moderate.as_view('moderate'))
+main.add_url_rule('/moderate/enable/<int:id>', view_func=ModerateEnable.as_view('moderate_enable'))
+main.add_url_rule('/moderate/disable/<int:id>', view_func=ModerateDisable.as_view('moderate_disable'))
+
 

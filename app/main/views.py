@@ -291,3 +291,40 @@ class ShowFollowed(MethodView):
         resp = make_response(redirect(url_for('.index')))
         resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
         return resp
+
+
+class Moderate(MethodView):
+    @login_required
+    @permission_required(Permission.MODERATE)
+    def get(self):
+        page = request.args.get('page', 1, type=int)
+        pagination = Comment.query.order_by(Comment.timestamp).paginate(
+            page, per_page=current_app.config['FLASK_COMMENTS_PER_PAGE'],
+            error_out=False)
+        comments = pagination.items
+        return render_template('moderate.html', comments=comments,
+                               pagination=pagination, page=page)
+
+
+class ModerateEnable(MethodView):
+    @login_required
+    @permission_required(Permission.MODERATE)
+    def get(self, id):
+        comment = Comment.query.get_or_404(id)
+        comment.disabled = False
+        db.session.add(comment)
+        db.session.commit()
+        return redirect(url_for('.moderate',
+                                page=request.args.get('page', 1, type=int)))
+
+
+class ModerateDisable(MethodView):
+    @login_required
+    @permission_required(Permission.MODERATE)
+    def get(self, id):
+        comment = Comment.query.get_or_404(id)
+        comment.disabled = True
+        db.session.add(comment)
+        db.session.commit()
+        return redirect(url_for('.moderate',
+                                page=request.args.get('page', 1, type=int)))
