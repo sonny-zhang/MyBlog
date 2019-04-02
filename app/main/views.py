@@ -6,10 +6,10 @@ from flask import render_template, redirect, url_for, abort, flash, request, cur
 from flask_login import login_required, current_user
 from flask.views import MethodView
 from sqlalchemy import desc
-from app.models import User, Role, Permission, Article
+from app.models import User, Role, Permission, Article, Comment
 from app import db
 from app.decorators import admin_required, permission_required
-from .forms import EditProfileAdminForm, EditProfileForm, ArticleForm
+from .forms import EditProfileAdminForm, EditProfileForm, ArticleForm, CommentForm
 
 
 class Index(MethodView):
@@ -140,7 +140,41 @@ class ArticleView(MethodView):
     def get(self, id):
         """文章详情页"""
         article = Article.query.get_or_404(id)
-        return render_template('article.html', articles=[article])
+        form = CommentForm()
+        page = request.args.get('page', 1, type=int)
+        if page == -1:
+            page = (article.comments.count() - 1) // \
+                   current_app.config['FLASK_COMMENTS_PER_PAGE'] + 1
+        pagination = article.comments.order_by(Comment.timestamp).paginate(
+            page, per_page=current_app.config['FLASK_COMMENTS_PER_PAGE'],
+            error_out=False)
+        comments = pagination.items
+        return render_template('article.html', articles=[article], form=form,
+                               comments=comments, pagination=pagination)
+
+    @login_required
+    def post(self, id):
+        """评论"""
+        article = Article.query.get_or_404(id)
+        form = CommentForm()
+        if form.validate_on_submit():
+            comment = Comment(body=form.body.data,
+                              article=article,
+                              author=current_user._get_current_object())
+            db.session.add(comment)
+            db.session.commit()
+            flash('您的评论已经发布！')
+            return redirect(url_for('.article', id=article.id, page=-1))
+        page = request.args.get('page', 1, type=int)
+        if page == -1:
+            page = (article.comments.count() - 1) // \
+                   current_app.config['FLASK_COMMENTS_PER_PAGE'] + 1
+        pagination = article.comments.order_by(Comment.timestamp).paginate(
+            page, per_page=current_app.config['FLASK_COMMENTS_PER_PAGE'],
+            error_out=False)
+        comments = pagination.items
+        return render_template('article.html', articles=[article], form=form,
+                               comments=comments, pagination=pagination)
 
 
 class ArticleEdit(MethodView):

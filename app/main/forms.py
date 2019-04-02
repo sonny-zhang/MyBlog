@@ -53,5 +53,12 @@ class EditProfileAdminForm(FlaskForm):
 
 
 class ArticleForm(FlaskForm):
+    """文章表单"""
     body = PageDownField('您有什么想说的？', validators=[DataRequired()])
+    submit = SubmitField('提交')
+
+
+class CommentForm(FlaskForm):
+    """评论表单"""
+    body = StringField('评论', validators=[DataRequired()])
     submit = SubmitField('提交')

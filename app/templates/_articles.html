@@ -31,6 +31,9 @@
             <a href="{{ url_for('main.article', id=article.id) }}">
                 <span class="label label-default">详情页</span>
             </a>
+            <a href="{{ url_for('.article', id=article.id) }}#comments">
+                <span class="label label-primary">{{ article.comments.count() }} 评论</span>
+            </a>
         </div>
         </div>
     </li>

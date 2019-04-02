@@ -136,6 +136,7 @@ class User(UserMixin, db.Model):
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
     @staticmethod
     def add_self_follows():
@@ -347,6 +348,7 @@ class Article(db.Model):
     body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    comments = db.relationship('Comment', backref='article', lazy='dynamic')
 
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):
@@ -358,4 +360,29 @@ class Article(db.Model):
             tags=allowed_tags, strip=True))
 
 
+#: SQLAlchemy的"set"事件监听，Article.body字段设置了新值，Article.on_changed_body
 db.event.listen(Article.body, 'set', Article.on_changed_body)
+
+
+class Comment(db.Model):
+    """评论"""
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    disabled = db.Column(db.Boolean)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'))
+
+    @staticmethod
+    def on_changed_body(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i',
+                        'strong']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags, strip=True))
+
+
+#: SQLAlchemy的"set"事件监听，只要Comment.body字段设置了新值，就会调用Comment.on_changed_body
+db.event.listen(Comment.body, 'set', Comment.on_changed_body)
