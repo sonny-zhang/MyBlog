@@ -5,7 +5,8 @@
 from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import current_app, request
+from flask import current_app, url_for
+from app.exceptions import ValidationError
 from markdown import markdown
 from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager, db
@@ -320,6 +321,35 @@ class User(UserMixin, db.Model):
         return Article.query.join(Follow, Follow.followed_id == Article.author_id) \
             .filter(Follow.follower_id == self.id)
 
+    def to_json(self):
+        json_user = {
+            'url': url_for('api.get_user', id=self.id),
+            'username': self.username,
+            'member_since': self.member_since,
+            'last_seen': self.last_seen,
+            'articles_url': url_for('api.get_user_articles', id=self.id),
+            'followed_articles_url': url_for('api.get_user_followed_articles',
+                                             id=self.id),
+            'article_count': self.articles.count()
+        }
+        return json_user
+
+    def generate_auth_token(self, expiration=3600):
+        """生成授权token"""
+        s = Serializer(current_app.config['SECRET_KEY'],
+                       expires_in=expiration)
+        return s.dumps({'id': self.id}).decode('utf-8')
+
+    @staticmethod
+    def verify_auth_token(token):
+        """验证授权token[静态方法：只有解码令牌后才知道用户是谁]"""
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
+
 
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
@@ -359,6 +389,25 @@ class Article(db.Model):
             markdown(value, output_format='html'),
             tags=allowed_tags, strip=True))
 
+    def to_json(self):
+        json_article = {
+            'url': url_for('api.get_article', id=self.id),
+            'body': self.body,
+            'body_html': self.body_html,
+            'timestamp': self.timestamp,
+            'author_url': url_for('api.get_user', id=self.author_id),
+            'comments_url': url_for('api.get_article_comments', id=self.id),
+            'comment_count': self.comments.count()
+        }
+        return json_article
+
+    @staticmethod
+    def from_json(json_article):
+        body = json_article.get('body')
+        if body is None or body == '':
+            raise ValidationError('文章没有HTML的body')
+        return Article(body=body)
+
 
 #: SQLAlchemy的"set"事件监听，Article.body字段设置了新值，Article.on_changed_body
 db.event.listen(Article.body, 'set', Article.on_changed_body)
@@ -382,6 +431,24 @@ class Comment(db.Model):
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),
             tags=allowed_tags, strip=True))
+
+    def to_json(self):
+        json_comment = {
+            'url': url_for('api.get_comment', id=self.id),
+            'article_url': url_for('api.get_article', id=self.article_id),
+            'body': self.body,
+            'body_html': self.body_html,
+            'timestamp': self.timestamp,
+            'author_url': url_for('api.get_user', id=self.author_id),
+        }
+        return json_comment
+
+    @staticmethod
+    def from_json(json_comment):
+        body = json_comment.get('body')
+        if body is None or body == '':
+            raise ValidationError('评论没有HTML的body')
+        return Comment(body=body)
 
 
 #: SQLAlchemy的"set"事件监听，只要Comment.body字段设置了新值，就会调用Comment.on_changed_body
