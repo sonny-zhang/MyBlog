@@ -12,9 +12,10 @@ from .errors import forbidden
 
 @api.route('/articles/')
 def get_articles():
+    """文章分页资源"""
     page = request.args.get('page', 1, type=int)
     pagination = Article.query.paginate(
-        page, per_page=current_app.config['FLASK_ArticleS_PER_PAGE'],
+        page, per_page=current_app.config['FLASK_ARTICLES_PER_PAGE'],
         error_out=False)
     articles = pagination.items
     prev = None
@@ -33,6 +34,7 @@ def get_articles():
 
 @api.route('/articles/<int:id>')
 def get_article(id):
+    """文章资源get请求处理"""
     article = Article.query.get_or_404(id)
     return jsonify(article.to_json())
 
@@ -40,6 +42,7 @@ def get_article(id):
 @api.route('/articles/', methods=['POST'])
 @permission_required(Permission.WRITE)
 def new_article():
+    """文章资源post请求处理"""
     article = Article.from_json(request.json)
     article.author = g.current_user
     db.session.add(article)
@@ -51,6 +54,7 @@ def new_article():
 @api.route('/articles/<int:id>', methods=['PUT'])
 @permission_required(Permission.WRITE)
 def edit_article(id):
+    """文章资源put请求处理"""
     article = Article.query.get_or_404(id)
     if g.current_user != article.author and \
             not g.current_user.can(Permission.ADMIN):

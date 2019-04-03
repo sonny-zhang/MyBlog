@@ -405,7 +405,7 @@ class Article(db.Model):
     def from_json(json_article):
         body = json_article.get('body')
         if body is None or body == '':
-            raise ValidationError('文章没有HTML的body')
+            raise ValidationError('文章没有body字段')
         return Article(body=body)
 
 
@@ -447,7 +447,7 @@ class Comment(db.Model):
     def from_json(json_comment):
         body = json_comment.get('body')
         if body is None or body == '':
-            raise ValidationError('评论没有HTML的body')
+            raise ValidationError('评论没有body字段')
         return Comment(body=body)
 
 

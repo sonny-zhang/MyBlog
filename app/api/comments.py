@@ -11,6 +11,7 @@ from .decorators import permission_required
 
 @api.route('/comments/')
 def get_comments():
+    """获取所有评论资源"""
     page = request.args.get('page', 1, type=int)
     pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASK_COMMENTS_PER_PAGE'],
@@ -32,16 +33,18 @@ def get_comments():
 
 @api.route('/comments/<int:id>')
 def get_comment(id):
+    """获取1个评论资源"""
     comment = Comment.query.get_or_404(id)
     return jsonify(comment.to_json())
 
 
 @api.route('/articles/<int:id>/comments/')
 def get_article_comments(id):
+    """获取1篇文章所有评论资源"""
     article = Article.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     pagination = article.comments.order_by(Comment.timestamp.asc()).paginate(
-        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+        page, per_page=current_app.config['FLASK_COMMENTS_PER_PAGE'],
         error_out=False)
     comments = pagination.items
     prev = None
@@ -61,6 +64,7 @@ def get_article_comments(id):
 @api.route('/articles/<int:id>/comments/', methods=['POST'])
 @permission_required(Permission.COMMENT)
 def new_article_comment(id):
+    """创建1篇文章评论"""
     article = Article.query.get_or_404(id)
     comment = Comment.from_json(request.json)
     comment.author = g.current_user
