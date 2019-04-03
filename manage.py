@@ -3,6 +3,15 @@
 # @FileName : manage.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
 import os
+
+COV = None
+if os.environ.get('FLASK_COVERAGE'):
+    import coverage
+
+    COV = coverage.coverage(branch=True, include='app/*')
+    COV.start()
+
+import sys
 from app import create_app, db
 from app.models import Role, User, Permission, Article, Follow, Comment
 from flask_script import Manager, Shell
@@ -26,12 +35,28 @@ manager.add_command("shell", Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
 
 
-@manager.command
-def test():
+@manager.option('-c', '--coverage', dest='coverage', default=False, help='在代码覆盖下运行测试')
+def test(coverage):
     """运行单元测试"""
+    if coverage and not os.environ.get('FLASK_COVERAGE'):
+        #: 重新启动测试
+        import subprocess
+        os.environ['FLASK_COVERAGE'] = '1'
+        sys.exit(subprocess.call(['python'] + sys.argv))  #: Windows下要加上['python']，因为dll是32位
+
     import unittest
     tests = unittest.defaultTestLoader.discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
+    if COV:
+        COV.stop()
+        COV.save()
+        print('代码覆盖率概要：')
+        COV.report()
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        covdir = os.path.join(basedir, 'tmp/coverage')
+        COV.html_report(directory=covdir)
+        print('HTML版本：file://%s/index.html' % covdir)
+        COV.erase()
 
 
 if __name__ == "__main__":
@@ -41,5 +66,6 @@ if __name__ == "__main__":
     Role.query.all()
     #: 创建假测试数据
     from app.fake import users, articles
+
     users()
     articles()
