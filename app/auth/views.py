@@ -15,8 +15,9 @@ from .forms import LoginForm, RegistrationForm, PasswordResetRequestForm, Change
 
 @auth.before_app_request
 def before_request():
-    """拦截app请求: 登录了但是没有认证(更新访问时间)->Unconfirmed"""
+    """拦截app请求: 登录了但是没有认证->Unconfirmed"""
     if current_user.is_authenticated:
+        #: 更新访问时间
         current_user.ping()
         if not current_user.confirmed \
                 and request.blueprint != 'auth' \
@@ -113,7 +114,7 @@ class Logout(MethodView):
     def get(self):
         """登出"""
         logout_user()
-        flash('您已经退出登录')
+        flash('您已经成功退出')
         return redirect(url_for('main.index'))
 
 
