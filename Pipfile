@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 faker = "*"
 coverage = "*"
+flask-debugtoolbar = "*"
 
 [packages]
 flask = "*"

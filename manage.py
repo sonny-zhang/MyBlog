@@ -59,6 +59,16 @@ def test(coverage):
         COV.erase()
 
 
+@manager.option('-l', '--length', dest='length', default=25, help='要包含在分析器报告中的函数数')
+@manager.option('-p', '--profile-dir', dest='profile_dir', default=None, help='分析器数据保存的文件夹')
+def profile(length, profile_dir):
+    """Start the application under the code profiler."""
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[length],
+                                      profile_dir=profile_dir)
+    app.run(debug=False)
+
+
 if __name__ == "__main__":
     manager.run()
     #: 创建角色
