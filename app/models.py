@@ -184,6 +184,7 @@ class User(UserMixin, db.Model):
         """
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         #: 指定用户的id为加密数据，因为id只有数据库知道
+        #: 需要解码成utf-8，否则会有错误
         token = s.dumps({'confirm': self.id}).decode('utf-8')
         return token
 
@@ -192,6 +193,7 @@ class User(UserMixin, db.Model):
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             #: 验证加密方式符合服务器设置的SECRET_KEY、expiration
+            #: 需要编码成utf-8，否则会有错误
             data = s.loads(token.encode('utf-8'))
         except:
             return False

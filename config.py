@@ -23,6 +23,8 @@ class Config:
     FLASK_FOLLOWERS_PER_PAGE = 50   # 关注用户列表数据每页显示的条数
     FLASK_COMMENTS_PER_PAGE = 30    # 评论列表数据每页显示的条数
 
+    JSON_AS_ASCII = False   # 返回json格式，中文显示
+
     #: init_app()方法，参数是application实例。
     #: 功能：可以执行当前环境配置的初始化
     @staticmethod
@@ -39,8 +41,9 @@ class Development(Config):
 
 class Testing(Config):
     TESTING = True  # 用来测试开启测试环境
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or 'sqlite:///' + \
-                              os.path.join(basedir, 'data-test.sqlite')
+    #: '?check_same_thread=False' 设置该项，就可以允许一个线程创建并访问的sqlite的数据库，另外一个线程也可以进行访问
+    SQLALCHEMY_DATABASE_URI = (os.environ.get('TEST_DATABASE_URL') or 'sqlite:///' +
+                              os.path.join(basedir, 'data-test.sqlite')) + '?check_same_thread=False'
     WTF_CSRF_ENABLED = False
 
 

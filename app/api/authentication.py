@@ -13,7 +13,7 @@ auth = HTTPBasicAuth()
 
 @auth.verify_password
 def verify_password(email_or_token, password):
-    """支持token/email+password
+    """支持token/email+password 认证
     :param email_or_token:
     :param password:
     :return:
