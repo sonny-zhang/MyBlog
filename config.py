@@ -25,6 +25,10 @@ class Config:
 
     JSON_AS_ASCII = False   # 返回json格式，中文显示
 
+    #: 启用记录查询统计数字功能；缓慢查询的阈值设为0.5秒
+    SQLALCHEMY_RECORD_QUERIES = True
+    FLASK_SLOW_DB_QUERY_TIME = 0.5
+
     #: init_app()方法，参数是application实例。
     #: 功能：可以执行当前环境配置的初始化
     @staticmethod

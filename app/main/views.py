@@ -3,13 +3,27 @@
 # @FileName : views.py
 # @Blog     : http://www.cnblogs.com/1fengchen1/
 from flask import render_template, redirect, url_for, abort, flash, request, current_app, make_response
+from flask_sqlalchemy import get_debug_queries
 from flask_login import login_required, current_user
 from flask.views import MethodView
 from sqlalchemy import desc
 from app.models import User, Role, Permission, Article, Comment
+from . import main
 from app import db
 from app.decorators import admin_required, permission_required
 from .forms import EditProfileAdminForm, EditProfileForm, ArticleForm, CommentForm
+
+
+@main.after_app_request
+def after_request(response):
+    """将查询SQL慢于5秒的记录到日志"""
+    for query in get_debug_queries():
+        if query.duration >= current_app.config['FLASK_SLOW_DB_QUERY_TIME']:
+            current_app.logger.warning(
+                'SQL语句查询慢: %s\n参数: %s\n时长: %fs\n上下文: %s\n'
+                % (query.statement, query.parameters, query.duration,
+                   query.context))
+    return response
 
 
 class Index(MethodView):
