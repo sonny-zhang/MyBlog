@@ -15,7 +15,7 @@ import sys
 from app import create_app, db
 from app.models import Role, User, Permission, Article, Follow, Comment
 from flask_script import Manager, Shell
-from flask_migrate import Migrate, MigrateCommand
+from flask_migrate import Migrate, MigrateCommand, upgrade
 
 app = create_app(os.getenv('MyBlog_CONFIG') or 'default')
 manager = Manager(app)
@@ -66,7 +66,20 @@ def profile(length, profile_dir):
     from werkzeug.contrib.profiler import ProfilerMiddleware
     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[length],
                                       profile_dir=profile_dir)
-    app.run(debug=False)
+    app.run()
+
+
+@manager.command
+def deploy():
+    """运行部署任务"""
+    # 迁移最后一个数据库版本
+    upgrade()
+
+    # 创建或者更新Role表
+    Role.insert_roles()
+
+    # 所有的用户关注自己
+    User.add_self_follows()
 
 
 if __name__ == "__main__":
