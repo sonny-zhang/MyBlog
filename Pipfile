@@ -21,8 +21,8 @@ flask-wtf = "*"
 markdown = "*"
 flask-login = "*"
 bleach = "*"
-uwsgi = "*"
 flask-httpauth = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"
