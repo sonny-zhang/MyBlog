@@ -23,6 +23,7 @@ flask-login = "*"
 bleach = "*"
 flask-httpauth = "*"
 gunicorn = "*"
+pymysql = "*"
 
 [requires]
 python_version = "3.7"

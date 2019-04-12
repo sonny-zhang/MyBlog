@@ -20,7 +20,6 @@ COPY Pipfile Pipfile
 COPY Pipfile.lock Pipfile.lock
 RUN pip install pipenv
 RUN pipenv install
-RUN pipenv run pip list
 
 COPY app app
 COPY migrations migrations

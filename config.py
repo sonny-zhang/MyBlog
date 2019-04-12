@@ -38,7 +38,7 @@ class Config:
 
 class Development(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'sqlite:///' +\
+    SQLALCHEMY_DATABASE_URI = os.environ.get('MyBlog_DEV_DATABASE_URL') or 'sqlite:///' +\
                               os.path.join(basedir, 'data-dev.sqlite')
     # 自动提交数据变更
 
@@ -46,13 +46,13 @@ class Development(Config):
 class Testing(Config):
     TESTING = True  # 用来测试开启测试环境
     #: '?check_same_thread=False' 设置该项，就可以允许一个线程创建并访问的sqlite的数据库，另外一个线程也可以进行访问
-    SQLALCHEMY_DATABASE_URI = (os.environ.get('TEST_DATABASE_URL') or 'sqlite:///' +
+    SQLALCHEMY_DATABASE_URI = (os.environ.get('MyBlog_TEST_DATABASE_URL') or 'sqlite:///' +
                               os.path.join(basedir, 'data-test.sqlite')) + '?check_same_thread=False'
     WTF_CSRF_ENABLED = False
 
 
 class Product(Config):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + \
+    SQLALCHEMY_DATABASE_URI = os.environ.get('MyBlog_DATABASE_URL') or 'sqlite:///' + \
                               os.path.join(basedir, 'data.sqlite')
 
     @classmethod

@@ -106,3 +106,7 @@ venv.bak/
 # pycharm
 .idea/
 .pytest_cache/
+
+# env后缀文件：.env是app环境变量| mysql.env是mysql环境变量
+*.env
+

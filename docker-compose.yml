@@ -1,0 +1,28 @@
+version: '3'
+
+networks:
+  sonny:
+
+services:
+  myblog:
+    build: .
+    networks:
+      - sonny
+    depends_on:
+      - db
+    ports:
+      - "8000:5000"
+    env_file: .env
+    restart: always
+
+  db:
+    image: 'mysql:5.7.15'
+    networks:
+        - sonny
+    #环境变量文件里链接数据库URL含有库名，需要在数据库容器里创建database name
+    env_file: mysql.env
+    restart: always
+    volumes:
+        - /var/opt/myblog_data:/var/lib/mysql
+    ports:
+        - "3306:3306"
