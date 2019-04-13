@@ -11,7 +11,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8000:5000"
+      - "80:5000"
     env_file: .env
     restart: always
 
@@ -26,3 +26,4 @@ services:
         - /var/opt/myblog_data:/var/lib/mysql
     ports:
         - "3306:3306"
+
