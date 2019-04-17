@@ -211,7 +211,7 @@ class ArticleEdit(MethodView):
             db.session.add(article)
             db.session.commit()
             flash('文章已经更新.')
-            return redirect(url_for('.post', id=article.id))
+            return redirect(url_for('.article', id=article.id))
         form.body.data = article.body
         return render_template('edit_post.html', form=form)
 
