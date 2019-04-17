@@ -386,12 +386,15 @@ class Article(db.Model):
 
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):
+        # 白名单
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
-                        'h1', 'h2', 'h3', 'p']
-        target.body_html = bleach.linkify(bleach.clean(
-            markdown(value, output_format='html'),
-            tags=allowed_tags, strip=True))
+                        'h1', 'h2', 'h3', 'p', 'img']
+        text_mkd = markdown(value, output_format='html')    # 将Markdown转化为HTML
+        # 删除所有不在白名单中的标签; 这个clean有问题，会清楚掉img标签导致无法展示图片
+        # text_clean = bleach.clean(text_mkd, tags=allowed_tags, strip=True)
+        text_html = bleach.linkify(text_mkd)
+        target.body_html = text_html
 
     def to_json(self):
         json_article = {
