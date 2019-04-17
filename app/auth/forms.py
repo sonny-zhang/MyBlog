@@ -41,11 +41,11 @@ class RegistrationForm(FlaskForm):
 
 class ChangePasswordForm(FlaskForm):
     """修改密码表单"""
-    old_password = PasswordField('Old Password', validators=[DataRequired()])
-    password = PasswordField('New Password', validators=[DataRequired(), Length(6, 18), EqualTo('password2',
+    old_password = PasswordField('旧密码', validators=[DataRequired()])
+    password = PasswordField('新密码', validators=[DataRequired(), Length(6, 18), EqualTo('password2',
                                                                                                 message='Passwords must match.')])
-    password2 = PasswordField('Confirm New Password', validators=[DataRequired(), Length(6, 18)])
-    submit = SubmitField('Submit')
+    password2 = PasswordField('重复密码', validators=[DataRequired(), Length(6, 18)])
+    submit = SubmitField('提交')
 
 
 class PasswordResetRequestForm(FlaskForm):
